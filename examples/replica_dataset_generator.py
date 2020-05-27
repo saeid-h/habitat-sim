@@ -116,12 +116,12 @@ def capture_scene(sim, save_path, room, forward_probability, left_probability, f
 		right_depth_image = obs["right_depth_sensor"]
 
 		if not obs['collided']:
-			print ('Saving {}/{}_{} ...'.format(room, str(int(focal)).zfill(4), str(seq).zfill(4)))
-			file_name = '{}/{}/{}_{}_{}.{}'.format(save_path+'/image_left', room, str(int(focal)).zfill(4), str(seq).zfill(4), 'left', 'png')
+			print ('Saving {}/{}_{} ...'.format(room, str(int(focal)).zfill(3), str(seq).zfill(3)))
+			file_name = '{}/{}/{}_{}_{}_{}.{}'.format(save_path+'/image_left', room, str(rep),str(int(focal)).zfill(3), str(seq).zfill(3), 'left', 'png')
 			Image.fromarray(left_rgb_image[..., 0:3]).save(file_name)
 			file_name = file_name.replace('_left', '_right')
 			Image.fromarray(right_rgb_image[..., 0:3]).save(file_name)
-			file_name = '{}/{}/{}_{}_{}.{}'.format(save_path+'/depth_left', room, str(int(focal)).zfill(4), str(seq).zfill(4), 'left', 'dpt')
+			file_name = '{}/{}/{}_{}_{}_{}.{}'.format(save_path+'/depth_left', room, str(rep), str(int(focal)).zfill(3), str(seq).zfill(3), 'left', 'dpt')
 			sintel.depth_write(file_name, left_depth_image)
 			file_name = file_name.replace('_left', '_right')
 			sintel.depth_write(file_name, right_depth_image)
