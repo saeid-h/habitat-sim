@@ -16,10 +16,10 @@ def main():
 
 	parser = argparse.ArgumentParser(description='Dataset generator example.')
 	parser.add_argument('--dataset_path',       type=str,   help='Path to dataset', default='data/replica_dataset/')
-	parser.add_argument('--save_path',          type=str,   help='Path to save', default='data/sythetic-replica/')
+	parser.add_argument('--save_path',          type=str,   help='Path to save', default='data/replica_reconstructed/')
 	parser.add_argument('--forward_prob',       type=float, help='forward step probability', default=0.25)
 	parser.add_argument('--left_prob',          type=float, help='left step probability', default=0.15)
-	parser.add_argument('--focal',          	type=float, help='left step probability', default=None)
+	parser.add_argument('--focal',          	type=float, help='left step probability', default=300)
 	parser.add_argument('--image_size',         type=int,   nargs=2,  help='generating image size.', default=[512, 512])
 	parser.add_argument('--repeat_room',        type=int,   help='repeat the image generating process.', default=5)
 	parser.add_argument('--up_pos',         	type=float, nargs=2,  help='random position limitis for sensor height.', default=[0.5, 2.0])
@@ -154,8 +154,8 @@ def replica_dataset_generator(args):
 	assert 0.0 <= left_probability <= 1
 	assert (1-forward_probability) * left_probability < 0.5
 	
-	n = int(500 / (args.repeat_room-1))
-	focals = range(100,601, n) if args.focal is None else [args.focal]*n
+	n = 500 / (args.repeat_room-1)
+	focals = range(100,601, n) if args.focal is None else [args.focal]*args.repeat_room
 
 	for room in rooms:
 		dataset_path = args.dataset_path + room + '/habitat/mesh_semantic.ply'
