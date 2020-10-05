@@ -16,13 +16,14 @@ def main():
 
 	parser = argparse.ArgumentParser(description='Dataset generator example.')
 	parser.add_argument('--dataset_path',       type=str,   help='Path to dataset', default='data/replica_dataset/')
-	parser.add_argument('--save_path',          type=str,   help='Path to save', default='data/replica_reconstructed/')
+	parser.add_argument('--save_path',          type=str,   help='Path to save', default='data/replica_regenerated/')
 	parser.add_argument('--forward_prob',       type=float, help='forward step probability', default=0.25)
 	parser.add_argument('--left_prob',          type=float, help='left step probability', default=0.15)
 	parser.add_argument('--focal',          	type=float, help='left step probability', default=300)
 	parser.add_argument('--image_size',         type=int,   nargs=2,  help='generating image size.', default=[512, 512])
 	parser.add_argument('--repeat_room',        type=int,   help='repeat the image generating process.', default=5)
-	parser.add_argument('--up_pos',         	type=float, nargs=2,  help='random position limitis for sensor height.', default=[0.5, 2.0])
+	parser.add_argument('--start_rep',          type=int,   help='Start number for the repeatation.', default=0)
+	parser.add_argument('--up_pos',         	type=float, nargs=2,  help='random position limitis for sensor height.', default=[0.9, 1.6])
 	parser.add_argument('--left_pos',         	type=float, nargs=2,  help='random position limitis for sensor left.', default=[-1.0, 1.0])
 	parser.add_argument('--back_pos',         	type=float, nargs=2,  help='random position limitis for sensor back.', default=[-1.0, 1.0])
 	
@@ -84,7 +85,7 @@ def setup_agent(dataset_path, random_pos, image_size, focal):
 	return sim
 	
 	
-def capture_scene(sim, save_path, room, forward_probability, left_probability, focal):
+def capture_scene(sim, save_path, room, forward_probability, left_probability, focal, rep):
 	seq = 0
 	rotation = 0
 	last_move = ''
@@ -114,10 +115,21 @@ def capture_scene(sim, save_path, room, forward_probability, left_probability, f
 		right_rgb_image = obs["right_rgb_sensor"]
 		left_depth_image = obs["left_depth_sensor"]
 		right_depth_image = obs["right_depth_sensor"]
+		
+		__good_example = True
+		if obs['collided']:
+			__good_example = False
+		elif np.sum(left_depth_image>0) / (left_depth_image.shape[0]*left_depth_image.shape[1]) < 0.5:
+			__good_example = False
+		elif np.median(left_depth_image) < 0.4:
+			__good_example = False
+		elif np.sum(left_depth_image<0.3) / (left_depth_image.shape[0]*left_depth_image.shape[1]) > 0.75:
+			__good_example = False
+		
 
-		if not obs['collided']:
-			print ('Saving {}/{}_{} ...'.format(room, str(int(focal)).zfill(3), str(seq).zfill(3)))
-			file_name = '{}/{}/{}_{}_{}_{}.{}'.format(save_path+'/image_left', room, str(rep),str(int(focal)).zfill(3), str(seq).zfill(3), 'left', 'png')
+		if __good_example:
+			print ('Saving {}/{}_{}_{} ...'.format(room, str(rep), str(int(focal)).zfill(3), str(seq).zfill(3)))
+			file_name = '{}/{}/{}_{}_{}_{}.{}'.format(save_path+'/image_left', room, str(rep), str(int(focal)).zfill(3), str(seq).zfill(3), 'left', 'png')
 			Image.fromarray(left_rgb_image[..., 0:3]).save(file_name)
 			file_name = file_name.replace('_left', '_right')
 			Image.fromarray(right_rgb_image[..., 0:3]).save(file_name)
@@ -159,13 +171,14 @@ def replica_dataset_generator(args):
 
 	for room in rooms:
 		dataset_path = args.dataset_path + room + '/habitat/mesh_semantic.ply'
-		for rep in range(args.repeat_room):
-			sim = setup_agent(dataset_path, random_pos, image_size, focals[rep])
-			capture_scene(sim, save_path, room, forward_probability, left_probability, focals[rep])
+		for i in range(args.repeat_room):
+			sim = setup_agent(dataset_path, random_pos, image_size, focals[i])
+			capture_scene(sim, save_path, room, forward_probability, left_probability, focals[i], rep=i+args.start_rep)
 	
 	
 
 		
 
 if __name__ == "__main__":
+	# Unset the env variable first by '$ unset PYTHONPATH'
 	main()
