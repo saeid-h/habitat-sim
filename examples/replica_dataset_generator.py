@@ -15,17 +15,17 @@ import os
 def main():
 
 	parser = argparse.ArgumentParser(description='Dataset generator example.')
-	parser.add_argument('--dataset_path',       type=str,   help='Path to dataset', default='data/replica_dataset/')
-	parser.add_argument('--save_path',          type=str,   help='Path to save', default='data/replica_regenerated/')
-	parser.add_argument('--forward_prob',       type=float, help='forward step probability', default=0.25)
-	parser.add_argument('--left_prob',          type=float, help='left step probability', default=0.15)
-	parser.add_argument('--focal',          	type=float, help='left step probability', default=300)
-	parser.add_argument('--image_size',         type=int,   nargs=2,  help='generating image size.', default=[512, 512])
-	parser.add_argument('--repeat_room',        type=int,   help='repeat the image generating process.', default=5)
-	parser.add_argument('--start_rep',          type=int,   help='Start number for the repeatation.', default=0)
-	parser.add_argument('--up_pos',         	type=float, nargs=2,  help='random position limitis for sensor height.', default=[0.9, 1.6])
-	parser.add_argument('--left_pos',         	type=float, nargs=2,  help='random position limitis for sensor left.', default=[-1.0, 1.0])
-	parser.add_argument('--back_pos',         	type=float, nargs=2,  help='random position limitis for sensor back.', default=[-1.0, 1.0])
+	parser.add_argument('--dataset_path',	   type=str,   help='Path to dataset', default='data/replica_dataset/')
+	parser.add_argument('--save_path',	 type=str,   help='Path to save', default='data/replica_regenerated/')
+	parser.add_argument('--forward_prob',	   type=float, help='forward step probability', default=0.25)
+	parser.add_argument('--left_prob',		  type=float, help='left step probability', default=0.15)
+	parser.add_argument('--focal',		  	type=float, help='left step probability', default=300)
+	parser.add_argument('--image_size',		 type=int,   nargs=2,  help='generating image size.', default=[512, 512])
+	parser.add_argument('--repeat_room',		type=int,   help='repeat the image generating process.', default=5)
+	parser.add_argument('--start_rep',		  type=int,   help='Start number for the repeatation.', default=0)
+	parser.add_argument('--up_pos',		 	type=float, nargs=2,  help='random position limitis for sensor height.', default=[0.9, 1.6])
+	parser.add_argument('--left_pos',	 	type=float, nargs=2,  help='random position limitis for sensor left.', default=[-1.0, 1.0])
+	parser.add_argument('--back_pos',	 	type=float, nargs=2,  help='random position limitis for sensor back.', default=[-1.0, 1.0])
 	
 	args = parser.parse_args()
 	replica_dataset_generator(args)
@@ -115,15 +115,34 @@ def capture_scene(sim, save_path, room, forward_probability, left_probability, f
 		right_rgb_image = obs["right_rgb_sensor"]
 		left_depth_image = obs["left_depth_sensor"]
 		right_depth_image = obs["right_depth_sensor"]
-		
+
+		ROI = left_depth_image[192:192+128, 192:192+160]
 		__good_example = True
 		if obs['collided']:
 			__good_example = False
 		elif np.sum(left_depth_image>0) / (left_depth_image.shape[0]*left_depth_image.shape[1]) < 0.5:
 			__good_example = False
-		elif np.median(left_depth_image) < 0.4:
+		elif np.sum(left_depth_image[100:,:]>0) / (left_depth_image.shape[0]*left_depth_image.shape[1]) < 0.7:
 			__good_example = False
-		elif np.sum(left_depth_image<0.3) / (left_depth_image.shape[0]*left_depth_image.shape[1]) > 0.75:
+		elif np.max(left_depth_image[left_depth_image>0]) - np.min(left_depth_image[left_depth_image>0]) < 0.3:
+			__good_example = False
+		elif np.mean(left_depth_image[left_depth_image>0]) - np.min(left_depth_image[left_depth_image>0]) < 0.3:
+			__good_example = False
+		elif np.max(left_depth_image[left_depth_image>0]) - np.mean(left_depth_image[left_depth_image>0]) < 0.3:
+			__good_example = False
+		elif np.sum(ROI>0) / (160*128) < 0.95:
+			__good_example = False
+		elif np.max(ROI[ROI>0]) - np.min(ROI[ROI>0]) < 0.5:
+			__good_example = False
+		elif np.mean(ROI[ROI>0]) - np.min(ROI[ROI>0]) < 0.3:
+			__good_example = False
+		elif np.max(ROI[ROI>0]) - np.mean(ROI[ROI>0]) < 0.3:
+			__good_example = False
+		elif np.median(left_depth_image) < 0.5:
+			__good_example = False
+		elif np.mean(left_depth_image) < 0.5:
+			__good_example = False
+		elif np.sum(left_depth_image<0.3) / (left_depth_image.shape[0]*left_depth_image.shape[1]) > 0.5:
 			__good_example = False
 		
 
